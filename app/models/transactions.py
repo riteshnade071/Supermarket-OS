@@ -25,8 +25,8 @@ class PurchaseOrderStatus(str, enum.Enum):
 class Customer(Base):
     __tablename__ = "customers"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    tenant_id = Column(UUID(as_uuid=False), ForeignKey("tenants.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
     name = Column(String)
     phone = Column(String, index=True)
     loyalty_points = Column(Integer, default=0)
@@ -39,11 +39,11 @@ class Customer(Base):
 class Sale(Base):
     __tablename__ = "sales"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    tenant_id = Column(UUID(as_uuid=False), ForeignKey("tenants.id"), nullable=False)
-    store_id = Column(UUID(as_uuid=False), ForeignKey("stores.id"), nullable=False)
-    customer_id = Column(UUID(as_uuid=False), ForeignKey("customers.id"), nullable=True)
-    cashier_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=True)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
+    store_id = Column(String(36), ForeignKey("stores.id"), nullable=False)
+    customer_id = Column(String(36), ForeignKey("customers.id"), nullable=True)
+    cashier_id = Column(String(36), ForeignKey("users.id"), nullable=True)
 
     bill_number = Column(String, index=True)
     subtotal = Column(Float, default=0.0)
@@ -59,10 +59,10 @@ class Sale(Base):
 class SaleItem(Base):
     __tablename__ = "sale_items"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    sale_id = Column(UUID(as_uuid=False), ForeignKey("sales.id"), nullable=False)
-    product_id = Column(UUID(as_uuid=False), ForeignKey("products.id"), nullable=False)
-    batch_id = Column(UUID(as_uuid=False), ForeignKey("batches.id"), nullable=True)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    sale_id = Column(String(36), ForeignKey("sales.id"), nullable=False)
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
+    batch_id = Column(String(36), ForeignKey("batches.id"), nullable=True)
 
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Float, nullable=False)
@@ -75,10 +75,10 @@ class SaleItem(Base):
 class PurchaseOrder(Base):
     __tablename__ = "purchase_orders"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    tenant_id = Column(UUID(as_uuid=False), ForeignKey("tenants.id"), nullable=False)
-    store_id = Column(UUID(as_uuid=False), ForeignKey("stores.id"), nullable=False)
-    supplier_id = Column(UUID(as_uuid=False), ForeignKey("suppliers.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    tenant_id = Column(String(36), ForeignKey("tenants.id"), nullable=False)
+    store_id = Column(String(36), ForeignKey("stores.id"), nullable=False)
+    supplier_id = Column(String(36), ForeignKey("suppliers.id"), nullable=False)
 
     status = Column(Enum(PurchaseOrderStatus), default=PurchaseOrderStatus.DRAFT)
     is_ai_suggested = Column(Boolean, default=False)
@@ -90,9 +90,9 @@ class PurchaseOrder(Base):
 class PurchaseOrderItem(Base):
     __tablename__ = "purchase_order_items"
 
-    id = Column(UUID(as_uuid=False), primary_key=True, default=gen_uuid)
-    purchase_order_id = Column(UUID(as_uuid=False), ForeignKey("purchase_orders.id"), nullable=False)
-    product_id = Column(UUID(as_uuid=False), ForeignKey("products.id"), nullable=False)
+    id = Column(String(36), primary_key=True, default=gen_uuid)
+    purchase_order_id = Column(String(36), ForeignKey("purchase_orders.id"), nullable=False)
+    product_id = Column(String(36), ForeignKey("products.id"), nullable=False)
 
     quantity = Column(Integer, nullable=False)
     unit_price = Column(Float, nullable=False)
