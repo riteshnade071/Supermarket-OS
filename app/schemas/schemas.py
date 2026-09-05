@@ -90,7 +90,7 @@ class LowStockAlert(BaseModel):
     current_stock: int
     reorder_level: int
     avg_daily_sale: float
-    days_left: float
+    days_left: Optional[float] = None
     suggested_purchase_qty: int
 
 
