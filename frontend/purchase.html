@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purchase — Supermarket OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0F3B36;
+    --teal-dark: #0A2823;
+    --mango: #E8862E;
+    --mango-dark: #C96E1E;
+    --paper: #F5F3EE;
+    --paper-raised: #FFFFFF;
+    --ink: #16241F;
+    --ink-soft: #5B6B63;
+    --line: #D9D4C6;
+    --danger: #B23A2E;
+    --danger-bg: #F7E6E3;
+    --mint: #DCEDE1;
+    --amber: #C97A0E;
+    --amber-bg: #FBEEDA;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Work Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header { background: var(--teal); color: #EFEDE4; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header .title { font-size: 17px; font-weight: 600; }
+  header .title span { display: block; font-size: 11px; font-weight: 400; color: #9FB6AE; margin-top: 1px; }
+  header nav { display: flex; gap: 18px; align-items: center; }
+  header nav a { color: #C9DAD3; text-decoration: none; font-size: 13.5px; }
+  header nav a.active { color: #fff; font-weight: 600; }
+  .logout-btn { background: none; border: none; color: #C9DAD3; font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1.5px solid var(--line); }
+  .tab-btn { padding: 10px 16px; border: none; background: none; font-size: 14px; font-weight: 500; color: var(--ink-soft); cursor: pointer; border-bottom: 2.5px solid transparent; margin-bottom: -1.5px; }
+  .tab-btn.active { color: var(--teal); border-bottom-color: var(--mango); font-weight: 600; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 22px; margin-bottom: 22px; }
+  .card h2 { margin: 0 0 4px; font-size: 16px; }
+  .card .hint { font-size: 13px; color: var(--ink-soft); margin-bottom: 18px; }
+
+  .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 700px) { .form-grid { grid-template-columns: 1fr 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.span2 { grid-column: span 2; }
+  .field label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; }
+  .field input, .field select { padding: 10px 12px; border-radius: 7px; border: 1.5px solid var(--line); font-size: 14px; font-family: 'Work Sans', sans-serif; color: var(--ink); background: #fff; }
+  .field input:focus, .field select:focus { outline: 2px solid var(--teal); outline-offset: 1px; border-color: var(--teal); }
+
+  .btn { padding: 11px 22px; border-radius: 8px; border: none; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .btn-primary { background: var(--mango); color: #2A1600; }
+  .btn-primary:hover { background: var(--mango-dark); }
+  .btn-primary:disabled { background: #E5E1D5; color: #A6A18F; cursor: not-allowed; }
+  .btn-ghost { background: none; border: 1.5px solid var(--line); color: var(--ink); }
+  .btn-ghost:hover { background: var(--mint); }
+  .btn-sm { padding: 6px 12px; font-size: 12.5px; border-radius: 6px; }
+
+  .form-actions { margin-top: 16px; display: flex; gap: 10px; align-items: center; }
+  .form-msg { font-size: 13.5px; }
+  .form-msg.ok { color: var(--teal); }
+  .form-msg.err { color: var(--danger); }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); padding: 0 10px 10px; border-bottom: 1.5px solid var(--ink); }
+  td { padding: 12px 10px; border-bottom: 1px dotted var(--line); font-size: 14px; }
+  td.num { font-family: 'IBM Plex Mono', monospace; text-align: right; }
+  tr:last-child td { border-bottom: none; }
+  .empty-row td { text-align: center; color: var(--ink-soft); padding: 30px 10px; }
+
+  .status-badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .status-draft { background: var(--paper); color: var(--ink-soft); }
+  .status-sent { background: var(--amber-bg); color: var(--amber); }
+  .status-received { background: var(--mint); color: var(--teal); }
+  .status-partially_received { background: #E4EEF7; color: #2B6CA3; }
+
+  .action-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; background: var(--amber); }
+  .suggest-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px dotted var(--line); }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-name { flex: 1; font-size: 13.5px; }
+  .suggest-meta { font-size: 12px; color: var(--ink-soft); }
+  .suggest-qty { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; font-weight: 600; width: 46px; text-align: right; }
+  .empty-note { color: var(--ink-soft); font-size: 13.5px; padding: 20px 0; text-align: center; }
+
+  /* PO builder */
+  .po-line { display: grid; grid-template-columns: 2fr 90px 110px 90px 32px; gap: 8px; align-items: center; padding: 8px 0; border-bottom: 1px dotted var(--line); }
+  .po-line select, .po-line input { padding: 8px 10px; border-radius: 6px; border: 1.5px solid var(--line); font-size: 13.5px; font-family: 'Work Sans', sans-serif; }
+  .po-line .line-amt { font-family: 'IBM Plex Mono', monospace; font-size: 13.5px; text-align: right; }
+  .po-line .remove-line { background: none; border: none; color: var(--danger); cursor: pointer; font-size: 16px; line-height: 1; }
+  .po-head-row { display: grid; grid-template-columns: 2fr 90px 110px 90px 32px; gap: 8px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); padding-bottom: 6px; border-bottom: 1.5px solid var(--ink); margin-bottom: 4px; }
+  .add-line-btn { margin-top: 12px; background: none; border: 1.5px dashed var(--line); border-radius: 7px; padding: 9px 14px; font-size: 13px; color: var(--teal); cursor: pointer; width: 100%; }
+  .add-line-btn:hover { background: var(--mint); }
+  .po-total-row { display: flex; justify-content: flex-end; gap: 20px; padding: 14px 0 4px; font-size: 15px; font-weight: 600; }
+
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(15,59,54,0.35); display: none; align-items: center; justify-content: center; z-index: 40; padding: 20px; }
+  .modal-backdrop.show { display: flex; }
+  .modal { background: #fff; border-radius: 12px; padding: 24px; width: 380px; max-height: 85vh; overflow-y: auto; }
+  .modal h3 { margin: 0 0 4px; font-size: 15px; }
+  .modal .sub { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 14px; }
+  .modal .field { margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .receive-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dotted var(--line); font-size: 13.5px; }
+  .receive-row input { width: 70px; padding: 6px 8px; border-radius: 6px; border: 1.5px solid var(--line); font-family: 'IBM Plex Mono', monospace; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--teal); color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 14px; display: none; z-index: 50; box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+  .toast.show { display: block; }
+  .toast.error { background: var(--danger); }
+
+  .login-screen { position: fixed; inset: 0; background: var(--paper); display: flex; align-items: center; justify-content: center; z-index: 60; }
+  .login-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px; padding: 34px 30px; width: 320px; }
+  .login-card h1 { font-size: 18px; margin: 0 0 4px; }
+  .login-card .sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; }
+  .login-card .field { margin-bottom: 14px; }
+  .login-card .field label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 5px; display:block; }
+  .login-card .field input { width: 100%; padding: 11px 13px; border-radius: 7px; border: 1.5px solid var(--line); font-size: 14px; }
+  .login-btn { width: 100%; padding: 13px; border: none; border-radius: 9px; background: var(--mango); color: #2A1600; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .login-hint { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>Purchase</h1>
+    <div class="sub">Log in with your store phone number and password</div>
+    <div class="field">
+      <label>Phone number</label>
+      <input id="loginPhone" type="tel" placeholder="9876543210" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="••••••••" />
+    </div>
+    <button class="login-btn" onclick="handleLogin()">Log in</button>
+    <div class="login-hint" id="loginError"></div>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+  <header>
+    <div class="title">
+      Purchase
+      <span id="storeLabel"></span>
+    </div>
+    <nav>
+      <a href="pos.html">Billing</a>
+      <a href="inventory.html">Products</a>
+      <a class="active" href="purchase.html">Purchase</a>
+      <a href="dashboard.html">Dashboard</a>
+      <button class="logout-btn" onclick="handleLogout()">Log out</button>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="orders" onclick="switchTab('orders')">Purchase orders</button>
+      <button class="tab-btn" data-tab="suggestions" onclick="switchTab('suggestions')">Reorder suggestions</button>
+      <button class="tab-btn" data-tab="suppliers" onclick="switchTab('suppliers')">Suppliers</button>
+    </div>
+
+    <!-- ORDERS TAB -->
+    <div class="tab-panel active" id="panel-orders">
+      <div class="card">
+        <h2>New purchase order</h2>
+        <div class="hint">Pick a supplier, add products and quantities, then send the order.</div>
+
+        <div class="form-grid" style="margin-bottom:16px;">
+          <div class="field span2">
+            <label>Supplier *</label>
+            <select id="po_supplier"><option value="">Loading suppliers…</option></select>
+          </div>
+          <div class="field">
+            <label>Expected delivery</label>
+            <input id="po_expected_date" type="date" />
+          </div>
+        </div>
+
+        <div class="po-head-row">
+          <span>Product</span><span>Qty</span><span>Rate (₹)</span><span>Amount</span><span></span>
+        </div>
+        <div id="poLines"></div>
+        <button class="add-line-btn" onclick="addPoLine()">+ Add product</button>
+
+        <div class="po-total-row">
+          <span>Order total</span>
+          <span class="mono" id="poTotal">₹0</span>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="createPoBtn" onclick="submitPurchaseOrder()">Send to supplier</button>
+          <span class="form-msg" id="poMsg"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Order history</h2>
+        <div class="hint">Track what's been ordered and receive stock as it arrives.</div>
+        <table>
+          <thead>
+            <tr>
+              <th>PO #</th><th>Supplier</th><th>Date</th><th style="text-align:right">Items</th>
+              <th style="text-align:right">Total</th><th>Status</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="orderRows"><tr class="empty-row"><td colspan="7">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SUGGESTIONS TAB -->
+    <div class="tab-panel" id="panel-suggestions">
+      <div class="card">
+        <h2>AI reorder suggestions</h2>
+        <div class="hint">Based on recent sales velocity. Select items to add to a new purchase order.</div>
+        <div id="suggestList"><div class="empty-note">Loading…</div></div>
+        <div class="form-actions" style="margin-top:16px;">
+          <button class="btn btn-primary" id="createFromSuggestBtn" onclick="createPoFromSuggestions()" disabled>Create PO from selected</button>
+          <span class="form-msg" id="suggestMsg"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUPPLIERS TAB -->
+    <div class="tab-panel" id="panel-suppliers">
+      <div class="card">
+        <h2>Add a supplier</h2>
+        <div class="form-grid">
+          <div class="field">
+            <label>Supplier name *</label>
+            <input id="s_name" placeholder="e.g. ABC Distributors" />
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input id="s_phone" type="tel" placeholder="9876543210" />
+          </div>
+          <div class="field">
+            <label>GSTIN</label>
+            <input id="s_gstin" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label>Credit period (days)</label>
+            <input id="s_credit_days" type="number" placeholder="0" />
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-primary" id="addSupplierBtn" onclick="handleAddSupplier()">Add supplier</button>
+          <span class="form-msg" id="supplierMsg"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Your suppliers</h2>
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Phone</th><th>GSTIN</th><th style="text-align:right">Credit days</th></tr>
+          </thead>
+          <tbody id="supplierRows"><tr class="empty-row"><td colspan="4">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="receiveModal">
+  <div class="modal">
+    <h3 id="receiveModalTitle">Receive goods</h3>
+    <div class="sub">Confirm received quantities — stock updates automatically.</div>
+    <div id="receiveLines"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeReceiveModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitReceivePo()">Confirm receipt</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API_BASE = "https://supermarket-os-1.onrender.com";
+
+let session = JSON.parse(localStorage.getItem("session") || "null");
+let products = [];
+let suppliers = [];
+let orders = [];
+let reorderSuggestions = [];
+let poLineCount = 0;
+let receivingOrderId = null;
+
+function authHeaders() {
+  return session ? { "Authorization": `Bearer ${session.access_token}` } : {};
+}
+
+function formatMoney(n) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+
+async function handleLogin() {
+  const phone = document.getElementById("loginPhone").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errorBox = document.getElementById("loginError");
+  errorBox.textContent = "";
+  if (!phone || !password) { errorBox.textContent = "Enter phone and password."; return; }
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      errorBox.textContent = err.detail || "Login failed.";
+      return;
+    }
+    session = await res.json();
+    localStorage.setItem("session", JSON.stringify(session));
+    enterApp();
+  } catch {
+    errorBox.textContent = "Couldn't reach the server.";
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem("session");
+  session = null;
+  document.getElementById("mainApp").style.display = "none";
+  document.getElementById("loginScreen").style.display = "flex";
+}
+
+function enterApp() {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainApp").style.display = "block";
+  document.getElementById("storeLabel").textContent = session.name + " · " + session.role;
+  loadAll();
+}
+
+document.getElementById("loginPassword").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLogin(); });
+
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+  document.getElementById(`panel-${tab}`).classList.add("active");
+}
+
+async function loadAll() {
+  await Promise.all([loadProducts(), loadSuppliers(), loadOrders(), loadSuggestions()]);
+  if (poLineCount === 0) addPoLine();
+}
+
+// ---------- PRODUCTS (for PO line picker) ----------
+async function loadProducts() {
+  try {
+    const res = await fetch(`${API_BASE}/inventory/products-with-stock?store_id=${session.store_id}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    products = await res.json();
+  } catch {
+    products = [];
+  }
+}
+
+// ---------- SUPPLIERS ----------
+async function loadSuppliers() {
+  const supplierSelect = document.getElementById("po_supplier");
+  try {
+    const res = await fetch(`${API_BASE}/purchase/suppliers?store_id=${session.store_id}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    suppliers = await res.json();
+    renderSuppliers();
+    supplierSelect.innerHTML = suppliers.length
+      ? `<option value="">Select supplier…</option>` + suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join("")
+      : `<option value="">Add a supplier first</option>`;
+  } catch {
+    document.getElementById("supplierRows").innerHTML = `<tr class="empty-row"><td colspan="4">Couldn't load suppliers — check your connection.</td></tr>`;
+    supplierSelect.innerHTML = `<option value="">Couldn't load suppliers</option>`;
+  }
+}
+
+function renderSuppliers() {
+  const tbody = document.getElementById("supplierRows");
+  if (suppliers.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">No suppliers yet — add your first one above.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = suppliers.map(s => `
+    <tr>
+      <td>${s.name}</td>
+      <td class="mono">${s.phone || "—"}</td>
+      <td class="mono">${s.gstin || "—"}</td>
+      <td class="num">${s.credit_days || 0}</td>
+    </tr>
+  `).join("");
+}
+
+async function handleAddSupplier() {
+  const name = document.getElementById("s_name").value.trim();
+  const msg = document.getElementById("supplierMsg");
+  msg.textContent = ""; msg.className = "form-msg";
+  if (!name) { msg.textContent = "Supplier name is required."; msg.classList.add("err"); return; }
+
+  const phone = document.getElementById("s_phone").value.trim() || null;
+  const gstin = document.getElementById("s_gstin").value.trim() || null;
+  const credit_days = parseInt(document.getElementById("s_credit_days").value) || 0;
+
+  const btn = document.getElementById("addSupplierBtn");
+  btn.disabled = true; btn.textContent = "Adding…";
+
+  try {
+    const res = await fetch(`${API_BASE}/purchase/suppliers`, {
+      method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ store_id: session.store_id, name, phone, gstin, credit_days }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Could not add supplier");
+    }
+    msg.textContent = `"${name}" added.`;
+    msg.classList.add("ok");
+    ["s_name", "s_phone", "s_gstin", "s_credit_days"].forEach(id => document.getElementById(id).value = "");
+    loadSuppliers();
+  } catch (e) {
+    msg.textContent = e.message;
+    msg.classList.add("err");
+  }
+  btn.disabled = false; btn.textContent = "Add supplier";
+}
+
+// ---------- PO BUILDER ----------
+function addPoLine(productId, qty, rate) {
+  poLineCount += 1;
+  const lineId = `poline_${poLineCount}`;
+  const options = `<option value="">Select product…</option>` + products.map(p =>
+    `<option value="${p.id}" data-price="${p.purchase_price || 0}" ${p.id === productId ? "selected" : ""}>${p.name}</option>`
+  ).join("");
+
+  const row = document.createElement("div");
+  row.className = "po-line";
+  row.id = lineId;
+  row.innerHTML = `
+    <select onchange="onPoProductChange('${lineId}')">${options}</select>
+    <input type="number" min="1" value="${qty || 1}" oninput="recalcPoLine('${lineId}')" />
+    <input type="number" step="0.01" min="0" value="${rate || 0}" oninput="recalcPoLine('${lineId}')" />
+    <span class="line-amt mono" id="${lineId}_amt">₹0</span>
+    <button class="remove-line" onclick="removePoLine('${lineId}')">×</button>
+  `;
+  document.getElementById("poLines").appendChild(row);
+  recalcPoLine(lineId);
+}
+
+function onPoProductChange(lineId) {
+  const row = document.getElementById(lineId);
+  const select = row.querySelector("select");
+  const rateInput = row.querySelectorAll("input")[1];
+  const opt = select.options[select.selectedIndex];
+  const price = opt ? parseFloat(opt.dataset.price || 0) : 0;
+  if (price) rateInput.value = price;
+  recalcPoLine(lineId);
+}
+
+function recalcPoLine(lineId) {
+  const row = document.getElementById(lineId);
+  const qty = parseFloat(row.querySelectorAll("input")[0].value) || 0;
+  const rate = parseFloat(row.querySelectorAll("input")[1].value) || 0;
+  document.getElementById(`${lineId}_amt`).textContent = formatMoney(qty * rate);
+  recalcPoTotal();
+}
+
+function removePoLine(lineId) {
+  document.getElementById(lineId).remove();
+  recalcPoTotal();
+}
+
+function recalcPoTotal() {
+  let total = 0;
+  document.querySelectorAll(".po-line").forEach(row => {
+    const qty = parseFloat(row.querySelectorAll("input")[0].value) || 0;
+    const rate = parseFloat(row.querySelectorAll("input")[1].value) || 0;
+    total += qty * rate;
+  });
+  document.getElementById("poTotal").textContent = formatMoney(total);
+}
+
+function collectPoLines() {
+  const items = [];
+  document.querySelectorAll(".po-line").forEach(row => {
+    const select = row.querySelector("select");
+    const qty = parseFloat(row.querySelectorAll("input")[0].value) || 0;
+    const rate = parseFloat(row.querySelectorAll("input")[1].value) || 0;
+    if (select.value && qty > 0) {
+      items.push({ product_id: select.value, quantity: qty, purchase_price: rate });
+    }
+  });
+  return items;
+}
+
+async function submitPurchaseOrder() {
+  const msg = document.getElementById("poMsg");
+  msg.textContent = ""; msg.className = "form-msg";
+  const supplierId = document.getElementById("po_supplier").value;
+  const expectedDate = document.getElementById("po_expected_date").value || null;
+  const items = collectPoLines();
+
+  if (!supplierId) { msg.textContent = "Select a supplier."; msg.classList.add("err"); return; }
+  if (items.length === 0) { msg.textContent = "Add at least one product with a quantity."; msg.classList.add("err"); return; }
+
+  const btn = document.getElementById("createPoBtn");
+  btn.disabled = true; btn.textContent = "Sending…";
+
+  try {
+    const res = await fetch(`${API_BASE}/purchase/orders`, {
+      method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ store_id: session.store_id, supplier_id: supplierId, expected_date: expectedDate, items }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || "Could not create purchase order");
+    }
+    const po = await res.json();
+    msg.textContent = `PO ${po.order_number || ""} sent.`;
+    msg.classList.add("ok");
+    document.getElementById("poLines").innerHTML = "";
+    poLineCount = 0;
+    addPoLine();
+    document.getElementById("po_supplier").value = "";
+    document.getElementById("po_expected_date").value = "";
+    loadOrders();
+    showToast("Purchase order sent to supplier");
+  } catch (e) {
+    msg.textContent = e.message;
+    msg.classList.add("err");
+  }
+  btn.disabled = false; btn.textContent = "Send to supplier";
+}
+
+// ---------- ORDER HISTORY ----------
+async function loadOrders() {
+  try {
+    const res = await fetch(`${API_BASE}/purchase/orders?store_id=${session.store_id}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    orders = await res.json();
+    renderOrders();
+  } catch {
+    document.getElementById("orderRows").innerHTML = `<tr class="empty-row"><td colspan="7">Couldn't load orders — check your connection.</td></tr>`;
+  }
+}
+
+function renderOrders() {
+  const tbody = document.getElementById("orderRows");
+  if (!orders || orders.length === 0) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">No purchase orders yet.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = orders.map(o => `
+    <tr>
+      <td class="mono">${o.order_number}</td>
+      <td>${o.supplier_name}</td>
+      <td class="mono">${new Date(o.created_at).toLocaleDateString("en-IN")}</td>
+      <td class="num">${o.item_count}</td>
+      <td class="num">${formatMoney(o.total_amount)}</td>
+      <td><span class="status-badge status-${o.status}">${o.status.replace("_", " ")}</span></td>
+      <td>${o.status !== "received" ? `<button class="btn btn-ghost btn-sm" onclick="openReceiveModal('${o.id}')">Receive</button>` : "—"}</td>
+    </tr>
+  `).join("");
+}
+
+// ---------- RECEIVE GOODS ----------
+async function openReceiveModal(orderId) {
+  receivingOrderId = orderId;
+  const linesEl = document.getElementById("receiveLines");
+  linesEl.innerHTML = `<div class="empty-note">Loading order items…</div>`;
+  document.getElementById("receiveModal").classList.add("show");
+
+  try {
+    const res = await fetch(`${API_BASE}/purchase/orders/${orderId}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    const order = await res.json();
+    linesEl.innerHTML = order.items.map(it => `
+      <div class="receive-row">
+        <span>${it.product_name}</span>
+        <input type="number" min="0" value="${it.quantity - (it.received_quantity || 0)}" data-product-id="${it.product_id}" data-price="${it.purchase_price}" />
+      </div>
+    `).join("");
+  } catch {
+    linesEl.innerHTML = `<div class="empty-note">Couldn't load order — check your connection.</div>`;
+  }
+}
+
+function closeReceiveModal() {
+  document.getElementById("receiveModal").classList.remove("show");
+  receivingOrderId = null;
+}
+
+async function submitReceivePo() {
+  const rows = document.querySelectorAll("#receiveLines .receive-row input");
+  const items = [];
+  rows.forEach(input => {
+    const qty = parseFloat(input.value) || 0;
+    if (qty > 0) {
+      items.push({ product_id: input.dataset.productId, quantity: qty, purchase_price: parseFloat(input.dataset.price) || 0 });
+    }
+  });
+  if (items.length === 0) { showToast("Enter at least one received quantity", true); return; }
+
+  try {
+    const res = await fetch(`${API_BASE}/purchase/orders/${receivingOrderId}/receive`, {
+      method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ store_id: session.store_id, items }),
+    });
+    if (!res.ok) throw new Error();
+    showToast("Stock updated from goods receipt");
+    closeReceiveModal();
+    loadOrders();
+    loadProducts();
+  } catch {
+    showToast("Could not confirm receipt — check your connection", true);
+  }
+}
+
+// ---------- REORDER SUGGESTIONS ----------
+async function loadSuggestions() {
+  const el = document.getElementById("suggestList");
+  try {
+    const res = await fetch(`${API_BASE}/purchase/reorder-suggestions?store_id=${session.store_id}`, { headers: authHeaders() });
+    if (!res.ok) throw new Error();
+    reorderSuggestions = await res.json();
+    renderSuggestions();
+  } catch {
+    el.innerHTML = `<div class="empty-note">Couldn't load suggestions — check your connection.</div>`;
+  }
+}
+
+function renderSuggestions() {
+  const el = document.getElementById("suggestList");
+  if (!reorderSuggestions || reorderSuggestions.length === 0) {
+    el.innerHTML = `<div class="empty-note">All stock levels look healthy — nothing to reorder.</div>`;
+    document.getElementById("createFromSuggestBtn").disabled = true;
+    return;
+  }
+  el.innerHTML = reorderSuggestions.map((s, idx) => `
+    <div class="suggest-item">
+      <input type="checkbox" class="suggest-check" data-idx="${idx}" onchange="updateSuggestBtn()" />
+      <span class="action-dot"></span>
+      <span class="suggest-name">${s.product_name}
+        <div class="suggest-meta">Best supplier: ${s.suggested_supplier || "—"}${s.suggested_rate ? " · ₹" + s.suggested_rate + "/unit" : ""}</div>
+      </span>
+      <span class="suggest-qty">${s.suggested_purchase_qty}</span>
+    </div>
+  `).join("");
+  updateSuggestBtn();
+}
+
+function updateSuggestBtn() {
+  const checked = document.querySelectorAll(".suggest-check:checked").length;
+  document.getElementById("createFromSuggestBtn").disabled = checked === 0;
+}
+
+function createPoFromSuggestions() {
+  const checks = document.querySelectorAll(".suggest-check:checked");
+  document.getElementById("poLines").innerHTML = "";
+  poLineCount = 0;
+  checks.forEach(chk => {
+    const s = reorderSuggestions[parseInt(chk.dataset.idx)];
+    addPoLine(s.product_id, s.suggested_purchase_qty, s.suggested_rate || 0);
+  });
+  if (poLineCount === 0) addPoLine();
+  switchTab("orders");
+  showToast(`${checks.length} product${checks.length > 1 ? "s" : ""} added to new order`);
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isError ? " error" : "");
+  setTimeout(() => { t.className = "toast"; }, 3200);
+}
+
+if (session) { enterApp(); }
+</script>
+</body>
+</html>
