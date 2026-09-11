@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supermarket OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0F3B36; --teal-dark: #0A2823; --mango: #E8862E;
+    --paper: #F5F3EE; --paper-raised: #FFFFFF; --ink: #16241F;
+    --ink-soft: #5B6B63; --line: #D9D4C6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Work Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .wrap { max-width: 420px; width: 100%; }
+  h1 { color: var(--teal); font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--ink-soft); font-size: 14px; margin-bottom: 28px; }
+  .grid { display: grid; gap: 12px; }
+  a.card { display: flex; align-items: center; gap: 14px; background: var(--paper-raised); border: 1.5px solid var(--line); border-radius: 12px; padding: 18px 20px; text-decoration: none; color: var(--ink); transition: 0.15s; }
+  a.card:hover { border-color: var(--teal); background: #F0F6F3; }
+  a.card .icon { font-size: 24px; }
+  a.card .name { font-weight: 600; font-size: 15.5px; }
+  a.card .desc { font-size: 12.5px; color: var(--ink-soft); margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Supermarket OS</h1>
+    <div class="sub">Ek platform — billing se lekar business decisions tak.</div>
+    <div class="grid">
+      <a class="card" href="pos.html">
+        <span class="icon">🧾</span>
+        <span><span class="name">Billing / POS</span><div class="desc">Bill banao, barcode scan karo</div></span>
+      </a>
+      <a class="card" href="inventory.html">
+        <span class="icon">📦</span>
+        <span><span class="name">Inventory</span><div class="desc">Stock, expiry, products</div></span>
+      </a>
+      <a class="card" href="purchase.html">
+        <span class="icon">🛒</span>
+        <span><span class="name">Purchase & Suppliers</span><div class="desc">Orders, reorder suggestions, price list</div></span>
+      </a>
+      <a class="card" href="dashboard.html">
+        <span class="icon">📊</span>
+        <span><span class="name">Dashboard</span><div class="desc">Sales, profit, AI action feed</div></span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
