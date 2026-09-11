@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Supermarket OS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --teal: #0F3B36;
+    --teal-dark: #0A2823;
+    --mango: #E8862E;
+    --mango-dark: #C96E1E;
+    --paper: #F5F3EE;
+    --paper-raised: #FFFFFF;
+    --ink: #16241F;
+    --ink-soft: #5B6B63;
+    --line: #D9D4C6;
+    --danger: #B23A2E;
+    --danger-bg: #F7E6E3;
+    --mint: #DCEDE1;
+    --amber: #C97A0E;
+    --amber-bg: #FBEEDA;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Work Sans', sans-serif; background: var(--paper); color: var(--ink); min-height: 100vh; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  header { background: var(--teal); color: #EFEDE4; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; }
+  header .title { font-size: 17px; font-weight: 600; }
+  header .title span { display: block; font-size: 11px; font-weight: 400; color: #9FB6AE; margin-top: 1px; }
+  header nav { display: flex; gap: 18px; align-items: center; }
+  header nav a { color: #C9DAD3; text-decoration: none; font-size: 13.5px; }
+  header nav a.active { color: #fff; font-weight: 600; }
+  .logout-btn { background: none; border: none; color: #C9DAD3; font-size: 12.5px; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+  @media (max-width: 760px) { .stat-grid { grid-template-columns: 1fr 1fr; } }
+
+  .stat-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .stat-card .label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 8px; }
+  .stat-card .value { font-family: 'IBM Plex Mono', monospace; font-size: 26px; font-weight: 600; }
+  .stat-card .value.small { font-size: 20px; }
+  .stat-card.accent .value { color: var(--teal); }
+  .stat-card.warn .value { color: var(--amber); }
+
+  .section { display: grid; grid-template-columns: 1.3fr 1fr; gap: 18px; }
+  @media (max-width: 800px) { .section { grid-template-columns: 1fr; } }
+
+  .card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .card h2 { margin: 0 0 4px; font-size: 15.5px; }
+  .card .hint { font-size: 12.5px; color: var(--ink-soft); margin-bottom: 16px; }
+
+  .action-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px dotted var(--line); align-items: flex-start; }
+  .action-item:last-child { border-bottom: none; }
+  .action-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+  .action-dot.high { background: var(--danger); }
+  .action-dot.medium { background: var(--amber); }
+  .action-text { font-size: 13.5px; line-height: 1.5; }
+  .action-tag { display: inline-block; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.03em; padding: 1px 7px; border-radius: 10px; margin-right: 7px; font-weight: 600; }
+  .action-tag.reorder { background: var(--amber-bg); color: var(--amber); }
+  .action-tag.expiry { background: var(--danger-bg); color: var(--danger); }
+
+  .empty-note { color: var(--ink-soft); font-size: 13.5px; padding: 20px 0; text-align: center; }
+
+  .bar-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; }
+  .bar-label { font-size: 13px; width: 110px; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { flex: 1; height: 10px; background: var(--paper); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; background: var(--teal); border-radius: 5px; }
+  .bar-val { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; width: 50px; text-align: right; flex-shrink: 0; }
+
+  .refresh-note { font-size: 12px; color: var(--ink-soft); text-align: right; margin-top: 10px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--teal); color: #fff; padding: 12px 22px; border-radius: 8px; font-size: 14px; display: none; z-index: 50; }
+  .toast.show { display: block; }
+  .toast.error { background: var(--danger); }
+
+  .login-screen { position: fixed; inset: 0; background: var(--paper); display: flex; align-items: center; justify-content: center; z-index: 60; }
+  .login-card { background: var(--paper-raised); border: 1px solid var(--line); border-radius: 14px; padding: 34px 30px; width: 320px; }
+  .login-card h1 { font-size: 18px; margin: 0 0 4px; }
+  .login-card .sub { font-size: 13px; color: var(--ink-soft); margin-bottom: 20px; }
+  .login-card .field { margin-bottom: 14px; }
+  .login-card .field label { font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.03em; margin-bottom: 5px; display:block; }
+  .login-card .field input { width: 100%; padding: 11px 13px; border-radius: 7px; border: 1.5px solid var(--line); font-size: 14px; }
+  .login-btn { width: 100%; padding: 13px; border: none; border-radius: 9px; background: var(--mango); color: #2A1600; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .login-hint { text-align: center; margin-top: 14px; font-size: 12.5px; color: var(--ink-soft); }
+
+  /* ---------- AI Owner Assistant (chat widget) ---------- */
+  .chat-fab {
+    position: fixed; bottom: 22px; right: 22px; width: 56px; height: 56px; border-radius: 50%;
+    background: var(--teal); color: #fff; border: none; cursor: pointer; font-size: 24px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.22); z-index: 70; display: flex; align-items: center; justify-content: center;
+  }
+  .chat-panel {
+    position: fixed; bottom: 90px; right: 22px; width: 340px; max-width: calc(100vw - 32px);
+    height: 460px; max-height: calc(100vh - 130px); background: var(--paper-raised); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.24); z-index: 70; display: none;
+    flex-direction: column; overflow: hidden;
+  }
+  .chat-panel.open { display: flex; }
+  .chat-head { background: var(--teal); color: #fff; padding: 13px 16px; font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .chat-head button { background: none; border: none; color: #C9DAD3; font-size: 18px; cursor: pointer; line-height: 1; }
+  .chat-body { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .chat-msg { max-width: 85%; padding: 9px 12px; border-radius: 10px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+  .chat-msg.owner { align-self: flex-end; background: var(--mango); color: #2A1600; border-bottom-right-radius: 3px; }
+  .chat-msg.bot { align-self: flex-start; background: var(--mint); color: var(--ink); border-bottom-left-radius: 3px; }
+  .chat-msg.bot.loading { color: var(--ink-soft); font-style: italic; }
+  .chat-input-row { display: flex; gap: 8px; padding: 10px; border-top: 1px solid var(--line); }
+  .chat-input-row input { flex: 1; padding: 10px 12px; border-radius: 8px; border: 1.5px solid var(--line); font-size: 13.5px; }
+  .chat-input-row button { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .chat-suggest { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 10px; }
+  .chat-suggest button { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 5px 10px; font-size: 11.5px; color: var(--ink-soft); cursor: pointer; }
+</style>
+</head>
+<body>
+
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <h1>Dashboard</h1>
+    <div class="sub">Log in with your store phone number and password</div>
+    <div class="field">
+      <label>Phone number</label>
+      <input id="loginPhone" type="tel" placeholder="9876543210" />
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input id="loginPassword" type="password" placeholder="••••••••" />
+    </div>
+    <button class="login-btn" onclick="handleLogin()">Log in</button>
+    <div class="login-hint" id="loginError"></div>
+  </div>
+</div>
+
+<div id="mainApp" style="display:none;">
+  <header>
+    <div class="title">
+      Dashboard
+      <span id="storeLabel"></span>
+    </div>
+    <nav>
+      <a href="pos.html">Billing</a>
+      <a href="inventory.html">Products</a>
+      <a href="purchase.html">Purchase</a>
+      <a class="active" href="dashboard.html">Dashboard</a>
+      <button class="logout-btn" onclick="handleLogout()">Log out</button>
+    </nav>
+  </header>
+
+  <div class="wrap">
+    <div class="stat-grid">
+      <div class="stat-card accent">
+        <div class="label">Today's sales</div>
+        <div class="value" id="statSales">₹0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Bills today</div>
+        <div class="value" id="statBills">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">Avg bill value</div>
+        <div class="value small" id="statAvg">₹0</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="label">Gross profit</div>
+        <div class="value small" id="statProfit">₹0 <span style="font-size:13px; color:var(--ink-soft);" id="statMargin"></span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="card">
+        <h2>Action required</h2>
+        <div class="hint">Low stock and expiring items, most urgent first — this is your AI reorder feed.</div>
+        <div id="actionsList"><div class="empty-note">Loading…</div></div>
+      </div>
+
+      <div class="card">
+        <h2>Reorder suggestions</h2>
+        <div class="hint">Suggested purchase quantity based on recent sales.</div>
+        <div id="reorderList"><div class="empty-note">Loading…</div></div>
+      </div>
+    </div>
+
+    <div class="refresh-note" id="refreshNote"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- AI Owner Assistant -->
+<button class="chat-fab" id="chatFab" onclick="toggleChat()" title="Ask the AI assistant">💬</button>
+<div class="chat-panel" id="chatPanel">
+  <div class="chat-head">
+    <span>🤖 Owner Assistant</span>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+  <div class="chat-suggest">
+    <button onclick="askChat('Aaj kitni sale hui?')">Aaj ki sale?</button>
+    <button onclick="askChat('Aaj kya kya purchase hua?')">Aaj ka purchase?</button>
+    <button onclick="askChat('Reorder kaise karu?')">Reorder kaise karu?</button>
+  </div>
+  <div class="chat-body" id="chatBody">
+    <div class="chat-msg bot">Namaste! Aaj ki sale, purchase, ya app kaise use karna hai — kuch bhi poochho.</div>
+  </div>
+  <div class="chat-input-row">
+    <input id="chatInput" placeholder="Apna sawaal likho…" />
+    <button onclick="sendChat()">Send</button>
+  </div>
+</div>
+
+<script>
+const API_BASE = "https://supermarket-os-1.onrender.com";
+
+let session = JSON.parse(localStorage.getItem("session") || "null");
+
+function authHeaders() {
+  return session ? { "Authorization": `Bearer ${session.access_token}` } : {};
+}
+
+function formatMoney(n) {
+  return "₹" + Math.round(n).toLocaleString("en-IN");
+}
+
+async function handleLogin() {
+  const phone = document.getElementById("loginPhone").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errorBox = document.getElementById("loginError");
+  errorBox.textContent = "";
+  if (!phone || !password) { errorBox.textContent = "Enter phone and password."; return; }
+
+  try {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      errorBox.textContent = err.detail || "Login failed.";
+      return;
+    }
+    session = await res.json();
+    localStorage.setItem("session", JSON.stringify(session));
+    enterApp();
+  } catch {
+    errorBox.textContent = "Couldn't reach the server.";
+  }
+}
+
+function handleLogout() {
+  localStorage.removeItem("session");
+  session = null;
+  document.getElementById("mainApp").style.display = "none";
+  document.getElementById("loginScreen").style.display = "flex";
+}
+
+function enterApp() {
+  document.getElementById("loginScreen").style.display = "none";
+  document.getElementById("mainApp").style.display = "block";
+  document.getElementById("storeLabel").textContent = session.name + " · " + session.role;
+  loadDashboard();
+}
+
+document.getElementById("loginPassword").addEventListener("keypress", (e) => { if (e.key === "Enter") handleLogin(); });
+
+async function loadDashboard() {
+  try {
+    const [summaryRes, actionsRes, reorderRes] = await Promise.all([
+      fetch(`${API_BASE}/dashboard/summary?store_id=${session.store_id}`, { headers: authHeaders() }),
+      fetch(`${API_BASE}/dashboard/actions-required?store_id=${session.store_id}`, { headers: authHeaders() }),
+      fetch(`${API_BASE}/purchase/reorder-suggestions?store_id=${session.store_id}`, { headers: authHeaders() }),
+    ]);
+
+    if (summaryRes.ok) {
+      const s = await summaryRes.json();
+      document.getElementById("statSales").textContent = formatMoney(s.total_sales);
+      document.getElementById("statBills").textContent = s.total_bills;
+      document.getElementById("statAvg").textContent = formatMoney(s.avg_bill_value);
+      document.getElementById("statProfit").innerHTML = formatMoney(s.gross_profit) + ` <span style="font-size:13px; color:var(--ink-soft);">(${s.margin_percent}%)</span>`;
+    }
+
+    if (actionsRes.ok) {
+      const a = await actionsRes.json();
+      renderActions(a.actions);
+    }
+
+    if (reorderRes.ok) {
+      const r = await reorderRes.json();
+      renderReorder(r);
+    }
+
+    document.getElementById("refreshNote").textContent = "Updated " + new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    showToast("Couldn't load dashboard — check your connection", true);
+  }
+}
+
+function renderActions(actions) {
+  const el = document.getElementById("actionsList");
+  if (!actions || actions.length === 0) {
+    el.innerHTML = `<div class="empty-note">Nothing needs attention right now.</div>`;
+    return;
+  }
+  el.innerHTML = actions.map(a => `
+    <div class="action-item">
+      <span class="action-dot ${a.priority}"></span>
+      <span class="action-text">
+        <span class="action-tag ${a.type}">${a.type === 'reorder' ? 'Reorder' : 'Expiry'}</span>
+        ${a.message}
+      </span>
+    </div>
+  `).join("");
+}
+
+function renderReorder(items) {
+  const el = document.getElementById("reorderList");
+  if (!items || items.length === 0) {
+    el.innerHTML = `<div class="empty-note">All stock levels look healthy.</div>`;
+    return;
+  }
+  const maxQty = Math.max(...items.map(i => i.suggested_purchase_qty), 1);
+  el.innerHTML = items.slice(0, 8).map(i => `
+    <div class="bar-row">
+      <span class="bar-label" title="${i.product_name}">${i.product_name}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${(i.suggested_purchase_qty / maxQty * 100).toFixed(0)}%"></span></span>
+      <span class="bar-val mono">${i.suggested_purchase_qty}</span>
+    </div>
+  `).join("");
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast show" + (isError ? " error" : "");
+  setTimeout(() => { t.className = "toast"; }, 3200);
+}
+
+// ---------- AI Owner Assistant ----------
+function toggleChat() {
+  document.getElementById("chatPanel").classList.toggle("open");
+}
+
+function askChat(text) {
+  document.getElementById("chatInput").value = text;
+  sendChat();
+}
+
+document.getElementById("chatInput")?.addEventListener("keypress", (e) => { if (e.key === "Enter") sendChat(); });
+
+async function sendChat() {
+  const input = document.getElementById("chatInput");
+  const question = input.value.trim();
+  if (!question || !session) return;
+
+  const body = document.getElementById("chatBody");
+  body.insertAdjacentHTML("beforeend", `<div class="chat-msg owner">${escapeHtml(question)}</div>`);
+  input.value = "";
+  body.scrollTop = body.scrollHeight;
+
+  const loadingId = "loading-" + Date.now();
+  body.insertAdjacentHTML("beforeend", `<div class="chat-msg bot loading" id="${loadingId}">Soch raha hoon…</div>`);
+  body.scrollTop = body.scrollHeight;
+
+  try {
+    const res = await fetch(`${API_BASE}/chatbot/ask`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...authHeaders() },
+      body: JSON.stringify({ question, store_id: session.store_id }),
+    });
+    const data = await res.json();
+    document.getElementById(loadingId).outerHTML = `<div class="chat-msg bot">${escapeHtml(data.answer || "Jawab nahi mil paya.")}</div>`;
+  } catch {
+    document.getElementById(loadingId).outerHTML = `<div class="chat-msg bot">Connection issue — dobara try karo.</div>`;
+  }
+  body.scrollTop = body.scrollHeight;
+}
+
+function escapeHtml(str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+if (session) { enterApp(); }
+</script>
+</body>
+</html>
